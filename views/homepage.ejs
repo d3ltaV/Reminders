@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Tasks</title>
+</head>
+<body>
+    <h1>Your Tasks</h1>
+    <form action="/tasks/delete" method="POST">
+        <ul>
+            <% tasks.forEach(task => { %>
+                <li>
+                    <strong><%= task.taskName %></strong> - <%= task.deadline.toISOString() %>
+                    <input type="checkbox" name="taskIds" value="<%= task.id %>">
+                </li>
+            <% }) %>
+        </ul>
+        <button type="submit">Delete Selected Tasks</button>
+    </form>
+    <a href="/tasks/add">Add New Task</a>
+</body>
+</html>

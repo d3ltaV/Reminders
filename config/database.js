@@ -8,13 +8,14 @@ const curConfig = config[env]; //access proper configurations
 //sequelize instance
 const sequelize = new Sequelize(curConfig.database, curConfig.username, curConfig.password, {
     host: curConfig.host,
-    dialect: curConfig.dialect,
+    // dialect: curConfig.dialect,
+    // dialect: "postgres",
+    dialect: "mysql",
     dialectOptions: curConfig.dialectOptions, //wont include if undefined
 });
-
 sequelize.authenticate()
     .then(() => {
-        console.log("database connection to ${env} database was successfull");
+        console.log("database connection to database was successfull");
     })
     .catch(err => {
         console.error("error", err);

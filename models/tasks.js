@@ -1,6 +1,7 @@
 'use strict';
 const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../config/database').sequelize;
+const sequelize = require('../config/database');
+const User = require('./users');
 
 class Tasks extends Model {
   /**
@@ -9,10 +10,14 @@ class Tasks extends Model {
    * The `models/index` file will call this method automatically.
    */
   static associate(models) {
-    // Define associations here, if needed
-    // Example: Tasks.belongsTo(models.User);
+    // Define associations here
+    Tasks.belongsTo(models.User, {
+      foreignKey: 'userId',
+      onDelete: 'CASCADE',
+    });
   }
 }
+
 Tasks.init(
   {
     id: {
@@ -28,15 +33,32 @@ Tasks.init(
       type: DataTypes.DATE,
       allowNull: false,
     },
+    reminderType: {
+      type: DataTypes.ENUM('one-time', 'multi-time'),
+      allowNull: false,
+    },
     reminderTime: {
+      type: DataTypes.DATE, //starting time of reminder
+      allowNull: false,
+    },
+    reminderInterval: {
+      type: DataTypes.INTEGER, //intervals
+      allowNull: true,
+    },
+    userId: {
       type: DataTypes.INTEGER,
-      defaultValue: 60,
-    }
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
   },
   {
-    sequelize, 
+    sequelize,
     modelName: 'Tasks',
     tableName: 'tasks',
   }
 );
-module.exports = Tasks; // Export the Tasks model directly
+
+module.exports = Tasks; // Export the Tasks model
