@@ -1,21 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Your Tasks</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Homepage</title>
 </head>
 <body>
     <h1>Your Tasks</h1>
+
+    <!-- List of Tasks -->
     <form action="/tasks/delete" method="POST">
         <ul>
             <% tasks.forEach(task => { %>
                 <li>
-                    <strong><%= task.taskName %></strong> - <%= task.deadline.toISOString() %>
-                    <input type="checkbox" name="taskIds" value="<%= task.id %>">
+                    <strong><%= task.taskName %></strong> - Deadline: <%= task.deadline.toISOString().slice(0, 16).replace('T', ' ') %>
+                    <input type="checkbox" name="taskIds" value="<%= task.id %>"> Delete
                 </li>
             <% }) %>
         </ul>
         <button type="submit">Delete Selected Tasks</button>
     </form>
-    <a href="/tasks/add">Add New Task</a>
+
+    <h2>Add a New Task</h2>
+    <form action="/tasks/add" method="POST">
+        <label for="taskName">Task Name:</label>
+        <input type="text" name="taskName" required>
+        
+        <label for="deadline">Deadline:</label>
+        <input type="datetime-local" name="deadline" required>
+        
+        <label for="reminderType">Reminder Type:</label>
+        <select name="reminderType" required>
+            <option value="one-time">One-time</option>
+            <option value="multi-time">Multi-time</option>
+        </select>
+
+        <label for="reminderTime">Reminder Time:</label>
+        <input type="datetime-local" name="reminderTime" required>
+
+        <label for="reminderInterval">Reminder Interval (in minutes):</label>
+        <input type="number" name="reminderInterval">
+
+        <button type="submit">Add Task</button>
+    </form>
+
+    <a href="/accounts/logout">Logout</a>
 </body>
 </html>

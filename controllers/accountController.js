@@ -26,18 +26,19 @@ exports.register = async (req, res) => {
 exports.showLoginForm = (req, res) => {
     res.render('login');
 };
+
 exports.login = async(req, res) => {
     const {email, password} = req.body;
     const user = await Users.findOne({ where: { email } });
     if (!user) {
-        return res.status(400).send('User does not exist');
+        return res.redirect('/accounts/login?error=User does not exist.');
     }
     if (!email || !password) {
         return res.status(400).send('Please complete all fields!'); //Overidden by HTML
     }
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-        return res.status(400).send('Incorrect password');
+        return res.redirect('/accounts/login?error=Incorrect password!');
     }
     req.session.userId = user.id;
     res.redirect('/tasks/homepage');

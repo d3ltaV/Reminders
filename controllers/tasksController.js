@@ -7,14 +7,15 @@ exports.showTasks = async (req, res) => {
     const userId = req.session.userId;
     try {
         const tasks = await Tasks.findAll({where : {userId}});
-        res.status(200).json(tasks);
+        res.render('homepage', {tasks});
+        // res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({error: ":("})
     }
 };
-exports.showAddTaskForm = (req, res) => {
-    res.render('addTask'); 
-};
+// exports.showAddTaskForm = (req, res) => {
+//     res.render('addTask'); 
+// };
 exports.addTask = async (req, res) => {
     if (!isAuthenticated(req)) {
         return res.status(401).json({ error: 'Please login!' });
@@ -23,6 +24,7 @@ exports.addTask = async (req, res) => {
     const userId = req.session.userId;
     try {
         const newTask = await Tasks.create({taskName, deadline, reminderType, reminderTime, reminderInterval, userId});
+        res.redirect('/tasks/homepage');
     } catch (error) {
         res.status(400).json({error:'Task creation failed'});
     }
@@ -35,9 +37,6 @@ exports.deleteTask = async(req, res) => {
     }
     const taskId = req.body.taskID;
     const userId = req.session.userId;
-    if (!userId) {
-        return res.status(401).json({error:'Please login!'});
-    }
     try {
         // const tasks = await Tasks.findAll({where: {id:taskId, userId}})
         // if (tasks.length === 0) {
@@ -51,10 +50,10 @@ exports.deleteTask = async(req, res) => {
     }
 }
 
-exports.homepage = (req, res) => {
-    const userId = req.session.userId;
-    if (!userId) {
-        return res.status(401).json({error:'Please login!'});
-    }
-    res.render('homepage');
-}
+// exports.homepage = (req, res) => {
+//     const userId = req.session.userId;
+//     if (!userId) {
+//         return res.status(401).json({error:'Please login!'});
+//     }
+//     res.render('homepage');
+// }
