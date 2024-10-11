@@ -6,6 +6,6 @@ const tasksController = require('../controllers/tasksController');
 router.get('/homepage', tasksController.showTasks);
 router.post('/add', tasksController.addTask);
 // router.get('/add', tasksController.showAddTaskForm)
-router.delete('/delete', tasksController.deleteTask);
-// router.get('/homepage', tasksController.homepage);
+router.post('/delete', tasksController.deleteTask);
+router.post('/modify', tasksController.modifyTask);
 module.exports = router;

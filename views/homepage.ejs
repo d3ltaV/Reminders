@@ -4,23 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Homepage</title>
+    <script>
+        function showModifyForm(taskId) {
+            const form = document.getElementById('modify-task-form-' + taskId);
+            const modifyBtn = document.getElementById('modify-btn-' + taskId);
+            if (form.style.display === 'block') {
+                return;
+            }
+            form.style.display = 'block'; 
+            modifyBtn.style.display = 'none'; 
+        }
+
+        function hideModifyForm(taskId) {
+            document.getElementById('modify-task-form-' + taskId).style.display = 'none'; 
+            document.getElementById('modify-btn-' + taskId).style.display = 'block';
+        }
+    </script>
 </head>
 <body>
     <h1>Your Tasks</h1>
-
-    <!-- List of Tasks -->
     <form action="/tasks/delete" method="POST">
         <ul>
             <% tasks.forEach(task => { %>
                 <li>
                     <strong><%= task.taskName %></strong> - Deadline: <%= task.deadline.toISOString().slice(0, 16).replace('T', ' ') %>
                     <input type="checkbox" name="taskIds" value="<%= task.id %>"> Delete
+                    <button type="button" id="modify-btn-<%= task.id %>" onclick="showModifyForm('<%= task.id%>')">Modify Task</button>
                 </li>
             <% }) %>
         </ul>
         <button type="submit">Delete Selected Tasks</button>
     </form>
+    <% tasks.forEach(task => { %>
+        <form action="/tasks/modify" method="POST" id="modify-task-form-<%= task.id %>" style="display:none;">
+            <input type="hidden" name="taskId" value="<%= task.id %>">
+            <label for="taskName">Task Name:</label>
+            <input type="text" name="taskName" value="<%= task.taskName %>">
+            <label for="deadline">Deadline:</label>
+            <input type="datetime-local" name="deadline" value="<%= task.deadline.toISOString().slice(0, 16) %>">
+            <label for="reminderType">Reminder Type:</label>
+            <select name="reminderType">
+                <option value="one-time" <% if (task.reminderType === 'one-time') { %> selected <% } %>>One-time</option>
+                <option value="multi-time" <% if (task.reminderType === 'multi-time') { %> selected <% } %>>Multi-time</option>
+            </select>
+            <label for="reminderTime">Reminder Time:</label>
+            <input type="datetime-local" name="reminderTime" value="<%= task.reminderTime.toISOString().slice(0, 16) %>">
 
+            <label for="reminderInterval">Reminder Interval (in minutes):</label>
+            <input type="number" name="reminderInterval" value="<%= task.reminderInterval %>">
+
+            <button type="submit" id="save-btn-<%= task.id %>">Save Modifications</button>
+            <button type="button" onclick="hideModifyForm('<%= task.id %>')">Cancel</button>
+        </form>
+    <% }) %>
     <h2>Add a New Task</h2>
     <form action="/tasks/add" method="POST">
         <label for="taskName">Task Name:</label>
