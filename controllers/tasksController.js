@@ -1,5 +1,6 @@
 const Tasks = require('../models/tasks');
 const isAuthenticated = require('../auth');
+const notifs = require('../services/notificationsService');
 exports.showTasks = async (req, res) => {
     if (!isAuthenticated(req)) {
         return res.status(401).json({ error: 'Please login!' });
@@ -36,6 +37,7 @@ exports.addTask = async (req, res) => {
             }
         }
         const newTask = await Tasks.create({taskName, deadline, reminderType, reminderTime, reminderInterval : reminderInterval ? reminderInterval :null, userId});
+        notifs.scheduleNotifications(newTask);
         res.redirect('/tasks/homepage');
     } catch (error) {
         res.status(400).json({error:'Task creation failed'});
@@ -53,6 +55,9 @@ exports.deleteTask = async(req, res) => {
             where: {
                 id: Array.isArray(taskIds) ? taskIds : [taskIds], userId
             }
+        });
+        (Array.isArray(taskIds) ? taskIds : [taskIds]).forEach(taskId => {
+            notifs.cancel(taskId);
         });
         res.redirect('/tasks/homepage');
     } catch (error) {
@@ -78,8 +83,11 @@ exports.modifyTask = async(req, res) => {
         task.reminderTime = reminderTime || task.reminderTime;
         task.reminderInterval = reminderInterval || task.reminderInterval;
         await task.save();
+        notifs.cancel(task.id);
+        notifs.scheduleNotifications(task);
+
         res.redirect('/tasks/homepage');
     } catch (error) {
-        res.status(400)
+        res.status(400).json({error: 'Failed to modify task'});
     }
 };
