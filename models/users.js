@@ -8,6 +8,10 @@ class Users extends Model {
       foreignKey: 'userId',
       as: 'tasks',
     });
+    Users.hasMany(models.Subscriptions, {
+      foreignKey: 'userId',
+      as: 'subscriptions',
+    })
   }
 }
 Users.init(

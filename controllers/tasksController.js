@@ -1,6 +1,8 @@
 const Tasks = require('../models/tasks');
 const isAuthenticated = require('../auth');
 const notifs = require('../services/notificationsService');
+require('dotenv').config();
+
 exports.showTasks = async (req, res) => {
     if (!isAuthenticated(req)) {
         return res.status(401).json({ error: 'Please login!' });
@@ -8,7 +10,8 @@ exports.showTasks = async (req, res) => {
     const userId = req.session.userId;
     try {
         const tasks = await Tasks.findAll({where : {userId}});
-        res.render('homepage', {tasks});
+        const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
+        res.render('homepage', {tasks, publicVapidKey});
         // res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({error: ":("})
@@ -37,7 +40,7 @@ exports.addTask = async (req, res) => {
             }
         }
         const newTask = await Tasks.create({taskName, deadline, reminderType, reminderTime, reminderInterval : reminderInterval ? reminderInterval :null, userId});
-        notifs.scheduleNotifications(newTask);
+        notifs.scheduleNotification(newTask);
         res.redirect('/tasks/homepage');
     } catch (error) {
         res.status(400).json({error:'Task creation failed'});

@@ -1,10 +1,45 @@
-const Tasks = require('../models/tasks');
-const notificationService = require('../services/notificationsService');
-const { sendNotification } = require('web-push');
+const Subscriptions = require('../models/subscriptions');
+const webpush = require('web-push');
+require('dotenv').config();
+const cron = require('node-cron');
+
+const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
+const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
+
+webpush.setVapidDetails(
+  'mailto:joellejingyaoyang@gmail.com',
+  publicVapidKey,
+  privateVapidKey
+);
+
 activeJobs = {};
+async function sendNotification(userId, task) {
+    console.log("yes");
+    try {
+        const subscriptionRecord = await Subscriptions.findOne({ where: { userId: userId } });
+        if (!subscriptionRecord) {
+            console.error(`no sub why`);
+            return;
+        }
+        const subscription = JSON.parse(subscriptionRecord.subscription); 
+        const payload = JSON.stringify({
+            title: 'Task Reminder',
+            body: `reminder: ${task.taskName}`,
+        });
+        console.log(subscription);
+        console.log(payload);
+        await webpush.sendNotification(subscription, payload);
+        console.log(`Notification sent for task: ${task.taskName}`);
+    } catch (err) {
+        console.error(`:( ${err.message}`);
+    }
+}
 function scheduleNotification(task) {
+    console.log("scheduled");
+    console.log(task);
     if (task.reminderType === "one-time") {
         scheduleOneNotification(task.reminderTime, task, task.deadline);
+        console.log("once");
     } else {
         scheduleMultiNotification(task.reminderTime, task, task.deadline, task.reminderInterval);
     }
@@ -14,18 +49,20 @@ function scheduleOneNotification(reminderDate, task, deadline) {
     const cronTime = convert(reminderDate);
     const reminderTime = new Date(reminderDate);
     const now = new Date();
+    // const subscription = task.subscription;
     if (now >= deadline) {
         return;
     }
-    cron.schedule(cronTime, () => {
-        sendNotification(task);
+    const job = cron.schedule(cronTime, () => {
+        sendNotification(task.userId, task)
     });
     activeJobs[task.id] = job;
 }
 function scheduleMultiNotification(reminderDate, task, deadline, reminderInterval) {
     const reminderTime = new Date(reminderDate);
-    const reminderInterval = reminderInterval * 60000;
+    reminderInterval = reminderInterval * 60000;
     const now = new Date();
+    const subscription = task.subscription;
     if (now >= deadline) {
         return;
     }
@@ -36,7 +73,7 @@ function scheduleMultiNotification(reminderDate, task, deadline, reminderInterva
             const interval = setInterval(() => {
                 const currentTime = new Date();
                 if (currentTime < deadline) {
-                    sendNotification(task);
+                    sendNotification(task.userId, task)
                 } else {
                     clearInterval(interval); 
                 }
@@ -48,9 +85,9 @@ function scheduleMultiNotification(reminderDate, task, deadline, reminderInterva
         const interval = setInterval(() => {
             const currentTime = new Date();
             if (currentTime < deadline) {
-                sendNotification(task);
+                sendNotification(subscription, task)
             } else {
-                clearInterval(interval); // Stop the interval when deadline is reached
+                clearInterval(interval);
             }
             activeJobs[task.id] = interval;
         }, reminderInterval);
