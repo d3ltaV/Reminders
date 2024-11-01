@@ -25,11 +25,18 @@
         window.publicVapidKey = "<%= publicVapidKey %>";
     </script>
     <script src="/notification.js"></script>
+    <!-- <script src="../public/notification.js"></script> -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const subscribeButton = document.getElementById('subscribeButton');
             if (subscribeButton) {
-                subscribeButton.addEventListener('click', requestNotificationPermission);
+            subscribeButton.addEventListener('click', function() {
+                // Request notification permission
+                requestNotificationPermission();
+
+                // Show notification upon successful subscription
+                showNotification("Subscribed!", "You have subscribed to notifications!");
+            });
             }
         });
     </script>
