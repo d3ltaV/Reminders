@@ -2,7 +2,6 @@ const Tasks = require('../models/tasks');
 const isAuthenticated = require('../auth');
 const notifs = require('../services/notificationsService');
 require('dotenv').config();
-
 exports.showTasks = async (req, res) => {
     if (!isAuthenticated(req)) {
         return res.status(401).json({ error: 'Please login!' });
@@ -11,12 +10,14 @@ exports.showTasks = async (req, res) => {
     try {
         const tasks = await Tasks.findAll({where : {userId}});
         const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
-        res.render('homepage', {tasks, publicVapidKey});
+        // const userId: req.session.userId;
+        res.render('homepage', {tasks, publicVapidKey, userId});
         // res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({error: ":("})
     }
 };
+
 exports.addTask = async (req, res) => {
     if (!isAuthenticated(req)) {
         return res.status(401).json({ error: 'Please login!' });
@@ -86,11 +87,13 @@ exports.modifyTask = async(req, res) => {
         task.reminderTime = reminderTime || task.reminderTime;
         task.reminderInterval = reminderInterval || task.reminderInterval;
         await task.save();
+        console.log(task);
+        console.log(taskId);
         notifs.cancel(task.id);
-        notifs.scheduleNotifications(task);
+        notifs.scheduleNotification(task);
 
         res.redirect('/tasks/homepage');
     } catch (error) {
-        res.status(400).json({error: 'Failed to modify task'});
+        res.status(400).json({ error: 'Failed to modify task', details: error.message });
     }
 };
