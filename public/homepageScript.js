@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function(){
-    requestNotificationPermission();
+document.addEventListener('DOMContentLoaded', function () {
+    const hasPermissionBeenRequested = sessionStorage.getItem('notificationPermissionRequested');
+    console.log(sessionStorage.getItem('notificationPermissionRequested'));
+    if (!hasPermissionBeenRequested) {
+        requestNotificationPermission();
+        sessionStorage.setItem('notificationPermissionRequested', 'true'); 
+    }
 });

@@ -6,4 +6,5 @@ router.get('/homepage', tasksController.showTasks);
 router.post('/add', tasksController.addTask);
 router.post('/delete', tasksController.deleteTask);
 router.post('/modify', tasksController.modifyTask);
+router.post('/reinitialize', tasksController.reinitialize);
 module.exports = router;

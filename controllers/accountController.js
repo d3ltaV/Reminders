@@ -63,7 +63,8 @@ exports.login = async (req, res) => {
         return res.redirect('/accounts/login?error=Incorrect password!');
     }
     req.session.userId = user.id;
-    await Subscriptions.destroy({ where: { userId: user.id } });
+    req
+    //Subscriptions.destroy({ where: { userId: user.id } });
     res.redirect('/tasks/homepage');
 };
 

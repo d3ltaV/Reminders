@@ -12,7 +12,6 @@ exports.showTasks = async (req, res) => {
         const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
         // const userId: req.session.userId;
         res.render('homepage', {tasks, publicVapidKey, userId});
-        // res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({error: ":("})
     }
@@ -47,27 +46,61 @@ exports.addTask = async (req, res) => {
         res.status(400).json({error:'Task creation failed'});
     }
 };
-
 exports.deleteTask = async(req, res) => {
     if (!isAuthenticated(req)) {
         return res.status(401).json({ error: 'Please login!' });
     }
+    const activeJobs = notifs.activeJobs;
     const taskIds = req.body.taskIds;
     const userId = req.session.userId;
+    const normalizedTaskIds = Array.isArray(taskIds) ? taskIds : [taskIds];
+
     try {
-        await Tasks.destroy({
+        // First cancel all notifications
+        await Promise.all(normalizedTaskIds.map(async taskId => {
+            try {
+                console.log('Active Jobs:', activeJobs);
+                await notifs.cancel(taskId);
+                console.log(`Cancelled notifications for task ${taskId}`);
+            } catch (cancelError) {
+                console.error(`Error cancelling notification for task ${taskId}:`, cancelError);
+            }
+        }));
+        const deletedCount = await Tasks.destroy({
             where: {
-                id: Array.isArray(taskIds) ? taskIds : [taskIds], userId
+                id: normalizedTaskIds, 
+                userId
             }
         });
-        (Array.isArray(taskIds) ? taskIds : [taskIds]).forEach(taskId => {
-            notifs.cancel(taskId);
-        });
+        console.log(`Successfully deleted ${deletedCount} tasks for user ${userId}`);
         res.redirect('/tasks/homepage');
     } catch (error) {
-        res.status(400).json({error:'Failed to delete tasks'});
+        console.error('Error deleting tasks:', error);
+        res.status(400).json({ error: 'Failed to delete tasks' });
     }
 }
+exports.reinitialize = async (req, res) => {
+    const userId = req.body.userId;
+    try {
+      const tasks = await Tasks.findAll({
+        where: {
+          userId,
+        },
+      });
+
+      await Promise.all(tasks.map(async (task) => {
+        await notifs.cancel(task.id);
+      }));
+  
+      await Promise.all(tasks.map(async (task) => {
+        await notifs.scheduleNotification(task);
+      }));
+      res.status(200).json({ message: 'Tasks reinitialized successfully' });
+    } catch (err) {
+      console.error('Error reinitializing tasks:', err);
+      res.status(500).json({ error: 'Failed to reinitialize tasks' });
+    }
+};
 
 exports.modifyTask = async(req, res) => {
     if (!isAuthenticated(req)) {
@@ -80,6 +113,7 @@ exports.modifyTask = async(req, res) => {
             id: taskId,
             userId: userId
         }});
+        await notifs.cancel(task.id);
         const { taskName, deadline, reminderType, reminderTime, reminderInterval } = req.body;
         task.taskName = taskName || task.taskName;
         task.deadline = deadline || task.deadline;
@@ -87,11 +121,10 @@ exports.modifyTask = async(req, res) => {
         task.reminderTime = reminderTime || task.reminderTime;
         task.reminderInterval = reminderInterval || task.reminderInterval;
         await task.save();
+        console.log("saved");
         console.log(task);
         console.log(taskId);
-        notifs.cancel(task.id);
-        notifs.scheduleNotification(task);
-
+        await notifs.scheduleNotification(task);
         res.redirect('/tasks/homepage');
     } catch (error) {
         res.status(400).json({ error: 'Failed to modify task', details: error.message });
